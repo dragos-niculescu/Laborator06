@@ -87,19 +87,38 @@ public class SingleThreadedServerActivity extends Activity {
 			try {
 				serverSocket = new ServerSocket(Constants.SERVER_PORT);
 				while (isRunning) {
-					Socket socket = serverSocket.accept();
-					Log.v(Constants.TAG, "Connection opened with "+socket.getInetAddress()+":"+socket.getLocalPort());
-					PrintWriter printWriter = Utilities.getWriter(socket);
-					printWriter.println(serverTextEditText.getText().toString());
-					socket.close();
-					Log.v(Constants.TAG, "Connection closed");
+					Socket s = serverSocket.accept();
+					final Socket socket = s;
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								Log.v(Constants.TAG, "Connection opened with "+socket.getInetAddress()+":"+socket.getLocalPort());
+								PrintWriter printWriter = Utilities.getWriter(socket);
+								Thread.sleep(3000);
+								printWriter.println(serverTextEditText.getText().toString());
+								socket.close();
+								Log.v(Constants.TAG, "Connection closed");
+							} catch(IOException ioException) {
+								Log.e(Constants.TAG, "An exception has occurred: "+ioException.getMessage());
+								if (Constants.DEBUG) {
+									ioException.printStackTrace();
+								}
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}).start();
+					
+					
 				}
 			} catch (IOException ioException) {
 				Log.e(Constants.TAG, "An exception has occurred: "+ioException.getMessage());
 				if (Constants.DEBUG) {
 					ioException.printStackTrace();
 				}
-			}
+			} 
 		}
 	}
 
@@ -113,21 +132,10 @@ public class SingleThreadedServerActivity extends Activity {
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.single_threaded_server, menu);
-		return true;
+	public void onDestroy() {
+	  super.onDestroy();
+	  singleThreadedServer.stopServer();
 	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
+	
+	
 }

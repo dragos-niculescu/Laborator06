@@ -1,12 +1,14 @@
 package ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.views;
 
+import java.io.BufferedReader;
+import java.net.Socket;
+
 import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.R;
 import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.general.Constants;
+import ro.pub.cs.systems.pdsd.lab06.ftpserverwelcomemessage.general.Utilities;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,10 +30,29 @@ public class FTPServerWelcomeMessageActivity extends Activity {
 				// get the BufferedReader attached to the socket (call to the Utilities.getReader() method)
 				// should the line start with Constants.FTP_MULTILINE_START_CODE, the welcome message is processed
 				// read lines from server while 
-				// - the value is different from Constants.FTP_MULTILINE_END_CODE1
+				// - the value is different fftrom Constants.FTP_MULTILINE_END_CODE1
 				// - the value does not start with Constants.FTP_MULTILINE_START_CODE2
 				// append the line to the welcomeMessageTextView text view content (on the UI thread!!!)
 				// close the socket
+				 Socket socket = new Socket (
+				          FTPServerAddressEditText.getText().toString(),
+				          Constants.FTP_PORT
+				        );
+				        BufferedReader bufferedReader = Utilities.getReader(socket);
+				        String t, s = "";
+				        do{ 
+				        	t = bufferedReader.readLine();
+				        	s = s + t;
+				        }while(!t.startsWith("220 FTP")); 
+				        
+				        final String daytimeProtocol = s;
+				        welcomeMessageTextView.post(new Runnable() {
+				          @Override
+				          public void run() {
+				            welcomeMessageTextView.setText(daytimeProtocol);
+				          }
+				        });
+					socket.close();
 
 			} catch (Exception exception) {
 				Log.e(Constants.TAG, "An exception has occurred: "+exception.getMessage());
@@ -63,22 +84,4 @@ public class FTPServerWelcomeMessageActivity extends Activity {
 		displayWelcomeMessageButton.setOnClickListener(buttonClickListener);
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.ftpserver_welcome_message, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
 }
